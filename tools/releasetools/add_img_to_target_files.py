@@ -337,6 +337,8 @@ def AddImagesToTargetFiles(filename):
     AddVendor(output_zip)
   banner("userdata")
   AddUserdata(output_zip)
+  banner("extrauserdata")
+  AddUserdataExtra(output_zip)
   banner("cache")
   AddCache(output_zip)
 
