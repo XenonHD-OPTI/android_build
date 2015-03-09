@@ -76,6 +76,9 @@ ifeq ($(KERNEL_ARCH),arm64)
   endif
 endif
 
+ifneq ($(TARGET_KERNEL_ADDITIONAL_CONFIG),)
+KERNEL_ADDITIONAL_CONFIG := $(TARGET_KERNEL_ADDITIONAL_CONFIG)
+endif
 
 ## Do be discontinued in a future version. Notify builder about target
 ## kernel format requirement
