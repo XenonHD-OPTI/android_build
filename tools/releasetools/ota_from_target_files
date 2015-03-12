@@ -869,7 +869,8 @@ def WriteBlockIncrementalOTAPackage(target_zip, source_zip, output_zip):
 
   system_diff = common.BlockDifference("system", system_tgt, system_src,
                                        check_first_block=True,
-                                       version=blockimgdiff_version)
+                                       version=blockimgdiff_version,
+                                       use_lzma=OPTIONS.use_lzma)
 
   if HasVendorPartition(target_zip):
     if not HasVendorPartition(source_zip):
@@ -878,7 +879,8 @@ def WriteBlockIncrementalOTAPackage(target_zip, source_zip, output_zip):
     vendor_tgt = GetImage("vendor", OPTIONS.target_tmp, OPTIONS.target_info_dict)
     vendor_diff = common.BlockDifference("vendor", vendor_tgt, vendor_src,
                                          check_first_block=True,
-                                         version=blockimgdiff_version)
+                                         version=blockimgdiff_version,
+                                         use_lzma=OPTIONS.use_lzma)
   else:
     vendor_diff = None
 
