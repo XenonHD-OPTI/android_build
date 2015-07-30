@@ -500,6 +500,19 @@ function brunch()
     return $?
 }
 
+function powerbrunch()
+{
+    breakfast $*
+    if [ $? -eq 0 ]; then
+        mkb bacon
+    else
+        echo "No such item in brunch menu. Try 'breakfast'"
+        return 1
+    fi
+    return $?
+}
+
+
 function breakfast()
 {
     target=$1
@@ -1717,6 +1730,18 @@ function mka() {
             ;;
     esac
 }
+
+function mkb() {
+    case `uname -s` in
+        Darwin)
+            make -j `sysctl hw.ncpu|cut -d" " -f2` "$@"
+            ;;
+        *)
+            mk_timer schedtool -B -n 1 -e ionice -n 1 make -j$(( $(cat /proc/cpuinfo | grep "^processor" | wc -l) *2)) "$@"
+            ;;
+    esac
+}
+
 
 function repolastsync() {
     RLSPATH="$ANDROID_BUILD_TOP/.repo/.repo_fetchtimes.json"
