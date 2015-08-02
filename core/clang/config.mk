@@ -8,7 +8,7 @@ endif
 
 # Set default Clang version
 ifeq ($(TARGET_CLANG_VERSION_EXP),)
-  TARGET_CLANG_VERSION := 3.5.2
+  TARGET_CLANG_VERSION := 3.5
 else
   TARGET_CLANG_VERSION := $(TARGET_CLANG_VERSION_EXP)
 endif
@@ -68,19 +68,21 @@ endif
 # Disable Polly flags for certain modules
 DISABLE_POLLY := \
 		v8_tools_gyp_v8_%_arm_host_gyp%
-
-ifeq ($(LOCAL_CLANG),true)
-  ifdef POLLYCC
-    ifneq (1,$(words $(filter $(DISABLE_POLLY),$(LOCAL_MODULE))))
-      ifdef LOCAL_CFLAGS
-        LOCAL_CFLAGS += $(POLLYCC)
-      else
-        LOCAL_CFLAGS := $(POLLYCC)
-      endif
-      ifdef LOCAL_CPPFLAGS
-        LOCAL_CPPFLAGS += $(POLLYCC)
-      else
-        LOCAL_CPPFLAGS := $(POLLYCC)
+		
+ifneq ($(TARGET_CLANG_VERSION),3.5)
+  ifeq ($(LOCAL_CLANG),true)
+    ifdef POLLYCC
+      ifneq (1,$(words $(filter $(DISABLE_POLLY),$(LOCAL_MODULE))))
+        ifdef LOCAL_CFLAGS
+          LOCAL_CFLAGS += $(POLLYCC)
+        else
+          LOCAL_CFLAGS := $(POLLYCC)
+        endif
+        ifdef LOCAL_CPPFLAGS
+          LOCAL_CPPFLAGS += $(POLLYCC)
+        else
+          LOCAL_CPPFLAGS := $(POLLYCC)
+        endif
       endif
     endif
   endif
