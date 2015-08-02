@@ -5,9 +5,10 @@
 ## The list of object files is exported in $(all_objects).
 ###########################################################
 
-#######################################
+#########################################
 include $(BUILD_SYSTEM)/base_rules.mk
-#######################################
+include $(BUILD_SYSTEM)/clang/config.mk
+#########################################
 
 my_ndk_sysroot :=
 my_ndk_sysroot_include :=

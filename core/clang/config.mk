@@ -2,20 +2,90 @@
 
 # WITHOUT_CLANG covers both HOST and TARGET
 ifeq ($(WITHOUT_CLANG),true)
-WITHOUT_TARGET_CLANG := true
-WITHOUT_HOST_CLANG := true
+  WITHOUT_TARGET_CLANG := true
+  WITHOUT_HOST_CLANG := true
 endif
 
-LLVM_PREBUILTS_PATH := prebuilts/clang/$(BUILD_OS)-x86/host/3.5/bin
-LLVM_PREBUILTS_HEADER_PATH := prebuilts/clang/$(BUILD_OS)-x86/host/3.5/lib/clang/3.5/include/
+# Set default Clang version
+ifeq ($(TARGET_CLANG_VERSION_EXP),)
+  TARGET_CLANG_VERSION := 3.5.2
+else
+  TARGET_CLANG_VERSION := $(TARGET_CLANG_VERSION_EXP)
+endif
 
-CLANG := $(LLVM_PREBUILTS_PATH)/clang$(BUILD_EXECUTABLE_SUFFIX)
-CLANG_CXX := $(LLVM_PREBUILTS_PATH)/clang++$(BUILD_EXECUTABLE_SUFFIX)
-LLVM_AS := $(LLVM_PREBUILTS_PATH)/llvm-as$(BUILD_EXECUTABLE_SUFFIX)
-LLVM_LINK := $(LLVM_PREBUILTS_PATH)/llvm-link$(BUILD_EXECUTABLE_SUFFIX)
 
+# Set paths for AOSP LLVM and Clang
+AOSP_LLVM_PREBUILTS_PATH := prebuilts/clang/$(BUILD_OS)-x86/host/3.5/bin
+AOSP_LLVM_PREBUILTS_HEADER_PATH := prebuilts/clang/$(BUILD_OS)-x86/host/3.5/lib/clang/3.5/include/
+AOSP_CLANG := $(AOSP_LLVM_PREBUILTS_PATH)/clang$(BUILD_EXECUTABLE_SUFFIX)
+AOSP_CLANG_CXX := $(AOSP_LLVM_PREBUILTS_PATH)/clang++$(BUILD_EXECUTABLE_SUFFIX)
+AOSP_LLVM_AS := $(AOSP_LLVM_PREBUILTS_PATH)/llvm-as$(BUILD_EXECUTABLE_SUFFIX)
+AOSP_LLVM_LINK := $(AOSP_LLVM_PREBUILTS_PATH)/llvm-link$(BUILD_EXECUTABLE_SUFFIX)
 CLANG_TBLGEN := $(BUILD_OUT_EXECUTABLES)/clang-tblgen$(BUILD_EXECUTABLE_SUFFIX)
 LLVM_TBLGEN := $(BUILD_OUT_EXECUTABLES)/llvm-tblgen$(BUILD_EXECUTABLE_SUFFIX)
+
+# Set paths for custom LLVM and Clang
+CUSTOM_LLVM_PREBUILTS_PATH := prebuilts/clang/$(BUILD_OS)-x86/host/$(TARGET_CLANG_VERSION)/bin
+CUSTOM_LLVM_PREBUILTS_HEADER_PATH := prebuilts/clang/$(BUILD_OS)-x86/host/$(TARGET_CLANG_VERSION)/lib/clang/$(TARGET_CLANG_VERSION)%/include/
+CUSTOM_CLANG := $(CUSTOM_LLVM_PREBUILTS_PATH)/clang$(BUILD_EXECUTABLE_SUFFIX)
+CUSTOM_CLANG_CXX := $(CUSTOM_LLVM_PREBUILTS_PATH)/clang++$(BUILD_EXECUTABLE_SUFFIX)
+CUSTOM_LLVM_AS := $(CUSTOM_LLVM_PREBUILTS_PATH)/llvm-as$(BUILD_EXECUTABLE_SUFFIX)
+CUSTOM_LLVM_LINK := $(CUSTOM_LLVM_PREBUILTS_PATH)/llvm-link$(BUILD_EXECUTABLE_SUFFIX)
+
+# Only use Polly on Linux
+ifeq ($(BUILD_OS),linux)
+  POLLYCC := -mllvm -polly \
+			 -mllvm -polly-allow-nonaffine=1\
+			 -mllvm -polly-ignore-aliasing=1 \
+			 -mllvm -polly-ast-detect-parallel \
+			 -mllvm -polly-disable-multiplicative-reductions 
+else
+  POLLYCC := 
+endif
+
+# Use AOSP LLVM and Clang on certain modules
+USE_AOSP_CLANG := \
+		v8_tools_gyp_v8_%_arm_host_gyp% 
+			
+ifeq ($(LOCAL_CLANG),true)
+  ifeq (1,$(words $(filter $(USE_AOSP_CLANG),$(LOCAL_MODULE))))
+    LLVM_PREBUILTS_PATH := $(AOSP_LLVM_PREBUILTS_PATH)
+    LLVM_PREBUILTS_HEADER_PATH := $(AOSP_LLVM_PREBUILTS_HEADER_PATH)
+    CLANG := $(AOSP_CLANG)
+    CLANG_CXX := $(AOSP_CLANG_CXX)
+    LLVM_AS := $(AOSP_LLVM_AS)
+    LLVM_LINK := $(AOSP_LLVM_LINK)
+  else
+    LLVM_PREBUILTS_PATH := $(CUSTOM_LLVM_PREBUILTS_PATH)
+    LLVM_PREBUILTS_HEADER_PATH := $(CUSTOM_LLVM_PREBUILTS_HEADER_PATH)
+    CLANG := $(CUSTOM_CLANG)
+    CLANG_CXX := $(CUSTOM_CLANG_CXX)
+    LLVM_AS := $(CUSTOM_LLVM_AS)
+    LLVM_LINK := $(CUSTOM_LLVM_LINK)
+  endif
+endif
+
+# Disable Polly flags for certain modules
+DISABLE_POLLY := \
+		v8_tools_gyp_v8_%_arm_host_gyp%
+
+ifeq ($(LOCAL_CLANG),true)
+  ifdef POLLYCC
+    ifneq (1,$(words $(filter $(DISABLE_POLLY),$(LOCAL_MODULE))))
+      ifdef LOCAL_CFLAGS
+        LOCAL_CFLAGS += $(POLLYCC)
+      else
+        LOCAL_CFLAGS := $(POLLYCC)
+      endif
+      ifdef LOCAL_CPPFLAGS
+        LOCAL_CPPFLAGS += $(POLLYCC)
+      else
+        LOCAL_CPPFLAGS := $(POLLYCC)
+      endif
+    endif
+  endif
+endif
+
 
 # The C/C++ compiler can be wrapped by setting the CC/CXX_WRAPPER vars.
 ifdef CC_WRAPPER
@@ -31,9 +101,9 @@ endif
 
 # Clang flags for all host or target rules
 CLANG_CONFIG_EXTRA_ASFLAGS :=
-CLANG_CONFIG_EXTRA_CFLAGS :=
-CLANG_CONFIG_EXTRA_CPPFLAGS :=
-CLANG_CONFIG_EXTRA_LDFLAGS :=
+CLANG_CONFIG_EXTRA_CFLAGS := -O3 -Qunused-arguments -Wno-unknown-warning-option -D__compiler_offsetof=__builtin_offsetof
+CLANG_CONFIG_EXTRA_CPPFLAGS := -O3 -Qunused-arguments -Wno-unknown-warning-option -D__compiler_offsetof=__builtin_offsetof
+CLANG_CONFIG_EXTRA_LDFLAGS := -O3
 
 CLANG_CONFIG_EXTRA_CFLAGS += \
   -D__compiler_offsetof=__builtin_offsetof
@@ -67,7 +137,7 @@ CLANG_CONFIG_HOST_EXTRA_LDFLAGS :=
 
 # Clang flags for all target rules
 CLANG_CONFIG_TARGET_EXTRA_ASFLAGS :=
-CLANG_CONFIG_TARGET_EXTRA_CFLAGS := -nostdlibinc
+CLANG_CONFIG_TARGET_EXTRA_CFLAGS := -nostdlibinc -Wno-error=array-bounds
 CLANG_CONFIG_TARGET_EXTRA_CPPFLAGS := -nostdlibinc
 CLANG_CONFIG_TARGET_EXTRA_LDFLAGS :=
 
