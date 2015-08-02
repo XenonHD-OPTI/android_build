@@ -51,7 +51,7 @@ $(combo_var_prefix)HAVE_KERNEL_MODULES := 0
 
 $(combo_var_prefix)GLOBAL_CFLAGS := -DNDEBUG -pipe -g0 -fno-exceptions -Wno-multichar 
 $(combo_var_prefix)RELEASE_CFLAGS := -DNDEBUG -pipe -g0 -fno-strict-aliasing
-$(combo_var_prefix)GLOBAL_CPPFLAGS := -DNDEBUG -pipe -g0 
+$(combo_var_prefix)GLOBAL_CPPFLAGS :=
 $(combo_var_prefix)GLOBAL_LDFLAGS := -Wl,--as-needed -Wl,--relax -Wl,--sort-common -Wl,--gc-sections
 $(combo_var_prefix)GLOBAL_ARFLAGS := crsPD
 $(combo_var_prefix)GLOBAL_LD_DIRS :=

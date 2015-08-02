@@ -67,8 +67,8 @@ $(combo_2nd_arch_prefix)TARGET_STRIP := $($(combo_2nd_arch_prefix)TARGET_TOOLS_P
 
 $(combo_2nd_arch_prefix)TARGET_NO_UNDEFINED_LDFLAGS := -Wl,--no-undefined
 
-$(combo_2nd_arch_prefix)TARGET_arm_CFLAGS := -marm -O3 -fomit-frame-pointer -fstrict-aliasing -funswitch-loops -Wno-error=array-bounds
-$(combo_2nd_arch_prefix)TARGET_thumb_CFLAGS := -marm -O3 -fomit-frame-pointer -fno-strict-aliasing
+$(combo_2nd_arch_prefix)TARGET_arm_CFLAGS := -marm -O2 -fomit-frame-pointer -fstrict-aliasing -funswitch-loops -Wno-error=array-bounds -Wno-error=maybe-uninitialized
+$(combo_2nd_arch_prefix)TARGET_thumb_CFLAGS := -mthumb -Os -fomit-frame-pointer -fno-strict-aliasing -Wno-error=maybe-uninitialized
 
 # Set FORCE_ARM_DEBUGGING to "true" in your buildspec.mk
 # or in your environment to force a full arm build, even for
@@ -87,6 +87,7 @@ endif
 android_config_h := $(call select-android-config-h,linux-arm)
 
 $(combo_2nd_arch_prefix)TARGET_GLOBAL_CFLAGS += \
+			-pipe \
 			-msoft-float \
 			-ffunction-sections \
 			-fdata-sections \
