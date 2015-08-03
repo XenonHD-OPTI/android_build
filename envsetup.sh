@@ -629,6 +629,42 @@ function lunch()
 
     set_stuff_for_environment
     printconfig
+
+    IS_DARWIN=$(uname -a | grep Darwin)
+    if [ -n "$IS_DARWIN" ];
+    then
+        echo
+    else
+        if ! [ -e /usr/lib/libisl.so ]
+        then
+            if ! [ -e /usr/local/lib/libisl.so ]
+            then
+                echo "Warning: isl not found on host system."
+                echo "Please install isl for full optimization"
+                echo "Example: sudo apt-get install libisl-dev"
+                export TARGET_CLANG_VERSION_EXP=3.5
+            else
+                export TARGET_CLANG_VERSION_EXP=
+            fi;
+        else
+            export TARGET_CLANG_VERSION_EXP=
+        fi;
+        if ! [ -e /usr/bin/cloog ]
+        then
+            if ! [ -e /usr/local/bin/cloog ]
+            then
+                echo "Warning: cloog not found on host system."
+                echo "Please install cloog for full optimization"
+                echo "Example: sudo apt-get install libcloog-isl-dev"
+                export TARGET_CLANG_VERSION_EXP=3.5
+            else
+                export TARGET_CLANG_VERSION_EXP=
+            fi;
+        else
+            export TARGET_CLANG_VERSION_EXP=
+        fi;
+    fi;
+
 }
 
 # Tab completion for lunch.

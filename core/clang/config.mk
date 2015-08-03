@@ -8,7 +8,7 @@ endif
 
 # Set default Clang version
 ifeq ($(TARGET_CLANG_VERSION_EXP),)
-  TARGET_CLANG_VERSION := 3.5
+  TARGET_CLANG_VERSION := 3.5.2
 else
   TARGET_CLANG_VERSION := $(TARGET_CLANG_VERSION_EXP)
 endif
@@ -45,7 +45,7 @@ endif
 
 # Use AOSP LLVM and Clang on certain modules
 USE_AOSP_CLANG := \
-		v8_tools_gyp_v8_%_arm_host_gyp% 
+		v8_tools_gyp_v8_base_arm_host_gyp%
 			
 ifeq ($(LOCAL_CLANG),true)
   ifeq (1,$(words $(filter $(USE_AOSP_CLANG),$(LOCAL_MODULE))))
@@ -67,7 +67,7 @@ endif
 
 # Disable Polly flags for certain modules
 DISABLE_POLLY := \
-		v8_tools_gyp_v8_%_arm_host_gyp%
+		v8_tools_gyp_v8_base_arm_host_gyp%
 		
 ifneq ($(TARGET_CLANG_VERSION),3.5)
   ifeq ($(LOCAL_CLANG),true)
