@@ -1061,7 +1061,8 @@ dirty:
 	@rm -rf $(OUT_DIR)/target/product/*/system/build.prop
 	@rm -rf $(OUT_DIR)/target/product/*/*.zip
 	@rm -rf $(OUT_DIR)/target/product/*/*.md5sum
-	@echo -e ${CL_GRN}"build.prop and zip files erased"${CL_RST}
+	@rm -rf $(OUT_DIR)/target/product/*/ota_lollipop.xml
+	@echo -e ${CL_GRN}"build.prop, ota and zip files erased"${CL_RST}
 
 # The Peter Special, cleans it just how you like it ;)
 .PHONY: peter
