@@ -3,9 +3,9 @@
 #----------------------------------------------------------------------
 ifeq ($(strip $(BOARD_CUSTOM_BOOTIMG_MK)),)
 ifeq ($(strip $(BOARD_KERNEL_SEPARATED_DT)),true)
-ifeq ($(strip $(BUILD_TINY_ANDROID)),true)
+#ifeq ($(strip $(BUILD_TINY_ANDROID)),true)
 include device/qcom/common/dtbtool/Android.mk
-endif
+#endif
 
 ifeq ($(strip $(TARGET_CUSTOM_DTBTOOL)),)
 DTBTOOL_NAME := dtbToolCM
