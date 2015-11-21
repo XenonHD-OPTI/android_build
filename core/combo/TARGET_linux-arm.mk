@@ -95,7 +95,6 @@ endif
 android_config_h := $(call select-android-config-h,linux-arm)
 
 $(combo_2nd_arch_prefix)TARGET_GLOBAL_CFLAGS += \
-			-pipe \
 			-msoft-float \
 			-ffunction-sections \
 			-fdata-sections \
@@ -117,7 +116,7 @@ $(combo_2nd_arch_prefix)TARGET_GLOBAL_CFLAGS += \
 # disable "-Wunused-but-set-variable" here.
 ifneq ($(filter 4.6 4.6.% 4.7 4.7.% 4.8, $($(combo_2nd_arch_prefix)TARGET_GCC_VERSION)),)
 $(combo_2nd_arch_prefix)TARGET_GLOBAL_CFLAGS += -fno-builtin-sin \
-			-fno-strict-volatile-bitfields 
+			-fno-strict-volatile-bitfields
 endif
 
 # This is to avoid the dreaded warning compiler message:
@@ -145,12 +144,12 @@ $(combo_2nd_arch_prefix)TARGET_GLOBAL_CPPFLAGS += -fvisibility-inlines-hidden
 
 # More flags/options can be added here
 $(combo_2nd_arch_prefix)TARGET_RELEASE_CFLAGS := \
-                       -DNDEBUG \
-                       -g \
-                       -Wstrict-aliasing=2 \
-                       -fgcse-after-reload \
-                       -frerun-cse-after-loop \
-                       -frename-registers
+	-DNDEBUG \
+	-g \
+	-Wstrict-aliasing=2 \
+	-fgcse-after-reload \
+	-frerun-cse-after-loop \
+	-frename-registers
 
 libc_root := bionic/libc
 libm_root := bionic/libm

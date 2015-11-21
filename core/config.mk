@@ -562,8 +562,12 @@ TARGET_CPU_SMP ?= true
 DEX2OAT_TARGET_ARCH := $(TARGET_ARCH)
 DEX2OAT_TARGET_CPU_VARIANT := $(TARGET_CPU_VARIANT)
 DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES := default
-ifneq (,$(filter $(DEX2OAT_TARGET_CPU_VARIANT),cortex-a7 cortex-a15 krait denver generic))
+ifneq (,$(filter $(DEX2OAT_TARGET_CPU_VARIANT),cortex-a7 cortex-a15 krait denver generic cortex-a53))
   DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES := div
+  ifneq (,$(filter $(DEX2OAT_TARGET_CPU_VARIANT),cortex-a53))
+    DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES += needfix_835769
+    DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES := $(subst $(space),$(comma),$(strip $(DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES)))
+  endif
 endif
 
 ifdef TARGET_2ND_ARCH
@@ -572,6 +576,10 @@ $(TARGET_2ND_ARCH_VAR_PREFIX)DEX2OAT_TARGET_CPU_VARIANT := $(TARGET_2ND_CPU_VARI
 $(TARGET_2ND_ARCH_VAR_PREFIX)DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES := default
 ifneq (,$(filter $($(TARGET_2ND_ARCH_VAR_PREFIX)DEX2OAT_TARGET_CPU_VARIANT),cortex-a7 cortex-a15 krait denver cortex-a53))
   $(TARGET_2ND_ARCH_VAR_PREFIX)DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES := div
+  ifneq (,$(filter $($(TARGET_2ND_ARCH_VAR_PREFIX)DEX2OAT_TARGET_CPU_VARIANT),cortex-a53))
+    DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES += needfix_835769
+    DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES := $(subst $(space),$(comma),$(strip $(DEX2OAT_TARGET_INSTRUCTION_SET_FEATURES)))
+  endif
 endif
 endif
 
@@ -638,8 +646,17 @@ ifneq ($(TARGET_COPY_FILES_OVERRIDES),)
     PRODUCT_COPY_FILES := $(filter-out $(TARGET_COPY_FILES_OVERRIDES), $(PRODUCT_COPY_FILES))
 endif
 
+ifneq ($(CM_BUILD),)
 ## We need to be sure the global selinux policies are included
 ## last, to avoid accidental resetting by device configs
-$(eval include vendor/xenonhd/sepolicy/sepolicy.mk)
+$(eval include vendor/cm/sepolicy/sepolicy.mk)
+
+# Include any vendor specific config.mk file
+-include $(TOPDIR)vendor/*/build/core/config.mk
+
+# Include any vendor specific apicheck.mk file
+-include $(TOPDIR)vendor/*/build/core/apicheck.mk
+
+endif
 
 include $(BUILD_SYSTEM)/dumpvar.mk
