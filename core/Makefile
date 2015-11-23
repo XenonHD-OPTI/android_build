@@ -840,8 +840,12 @@ ifneq (,$(TARGET_RECOVERY_DENSITY))
 recovery_density := $(filter %dpi,$(TARGET_RECOVERY_DENSITY))
 else
 ifneq (,$(PRODUCT_AAPT_PREF_CONFIG))
+ifeq ($(PRODUCT_AAPT_PREF_CONFIG),560dpi)
+recovery_density := xxxhdpi
+else
 # If PRODUCT_AAPT_PREF_CONFIG includes a dpi bucket, then use that value.
 recovery_density := $(filter %dpi,$(PRODUCT_AAPT_PREF_CONFIG))
+endif
 else
 # Otherwise, use the default medium density.
 recovery_densities := mdpi
