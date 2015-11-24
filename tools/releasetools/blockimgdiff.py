@@ -326,6 +326,7 @@ class BlockImageDiff(object):
 
         size = xf.src_ranges.size()
         src_string = [str(size)]
+        free_string = []
 
         unstashed_src_ranges = xf.src_ranges
         mapped_stashes = []
