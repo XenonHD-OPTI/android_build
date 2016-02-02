@@ -1761,7 +1761,179 @@ function repodiff() {
       'echo "$REPO_PATH ($REPO_REMOTE)"; git diff ${diffopts} 2>/dev/null ;'
 }
 
-# Force JAVA_HOME to point to java 1.7 or java 1.6  if it isn't already set.
+# Return success if adb is up and not in recovery
+function _adb_connected {
+    {
+        if [[ "$(adb get-state)" == device &&
+              "$(adb shell test -e /sbin/recovery; echo $?)" == 0 ]]
+        then
+            return 0
+        fi
+    } 2>/dev/null
+
+    return 1
+};
+
+# Credit for color strip sed: http://goo.gl/BoIcm
+function dopush()
+{
+    local func=$1
+    shift
+
+    adb start-server # Prevent unexpected starting server message from adb get-state in the next line
+    if ! _adb_connected; then
+        echo "No device is online. Waiting for one..."
+        echo "Please connect USB and/or enable USB debugging"
+        until _adb_connected; do
+            sleep 1
+        done
+        echo "Device Found."
+    fi
+
+    if (adb shell getprop ro.cm.device | grep -q "$CM_BUILD") || [ "$FORCE_PUSH" == "true" ];
+    then
+    # retrieve IP and PORT info if we're using a TCP connection
+    TCPIPPORT=$(adb devices | egrep '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+:[0-9]+[^0-9]+' \
+        | head -1 | awk '{print $1}')
+    adb root &> /dev/null
+    sleep 0.3
+    if [ -n "$TCPIPPORT" ]
+    then
+        # adb root just killed our connection
+        # so reconnect...
+        adb connect "$TCPIPPORT"
+    fi
+    adb wait-for-device &> /dev/null
+    sleep 0.3
+    adb remount &> /dev/null
+
+    mkdir -p $OUT
+    ($func $*|tee $OUT/.log;return ${PIPESTATUS[0]})
+    ret=$?;
+    if [ $ret -ne 0 ]; then
+        rm -f $OUT/.log;return $ret
+    fi
+
+    # Install: <file>
+    if [ `uname` = "Linux" ]; then
+        LOC="$(cat $OUT/.log | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g' | grep '^Install: ' | cut -d ':' -f 2)"
+    else
+        LOC="$(cat $OUT/.log | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | grep '^Install: ' | cut -d ':' -f 2)"
+    fi
+
+    # Copy: <file>
+    if [ `uname` = "Linux" ]; then
+        LOC="$LOC $(cat $OUT/.log | sed -r 's/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g' | grep '^Copy: ' | cut -d ':' -f 2)"
+    else
+        LOC="$LOC $(cat $OUT/.log | sed -E "s/"$'\E'"\[([0-9]{1,3}((;[0-9]{1,3})*)?)?[m|K]//g" | grep '^Copy: ' | cut -d ':' -f 2)"
+    fi
+
+    # If any files are going to /data, push an octal file permissions reader to device
+    if [ -n "$(echo $LOC | egrep '(^|\s)/data')" ]; then
+        CHKPERM="/data/local/tmp/chkfileperm.sh"
+(
+cat <<'EOF'
+#!/system/xbin/sh
+FILE=$@
+if [ -e $FILE ]; then
+    ls -l $FILE | awk '{k=0;for(i=0;i<=8;i++)k+=((substr($1,i+2,1)~/[rwx]/)*2^(8-i));if(k)printf("%0o ",k);print}' | cut -d ' ' -f1
+fi
+EOF
+) > $OUT/.chkfileperm.sh
+        echo "Pushing file permissions checker to device"
+        adb push $OUT/.chkfileperm.sh $CHKPERM
+        adb shell chmod 755 $CHKPERM
+        rm -f $OUT/.chkfileperm.sh
+    fi
+
+    stop_n_start=false
+    for FILE in $(echo $LOC | tr " " "\n"); do
+        # Make sure file is in $OUT/system or $OUT/data
+        case $FILE in
+            $OUT/system/*|$OUT/data/*)
+                # Get target file name (i.e. /system/bin/adb)
+                TARGET=$(echo $FILE | sed "s#$OUT##")
+            ;;
+            *) continue ;;
+        esac
+
+        case $TARGET in
+            /data/*)
+                # fs_config only sets permissions and se labels for files pushed to /system
+                if [ -n "$CHKPERM" ]; then
+                    OLDPERM=$(adb shell $CHKPERM $TARGET)
+                    OLDPERM=$(echo $OLDPERM | tr -d '\r' | tr -d '\n')
+                    OLDOWN=$(adb shell ls -al $TARGET | awk '{print $2}')
+                    OLDGRP=$(adb shell ls -al $TARGET | awk '{print $3}')
+                fi
+                echo "Pushing: $TARGET"
+                adb push $FILE $TARGET
+                if [ -n "$OLDPERM" ]; then
+                    echo "Setting file permissions: $OLDPERM, $OLDOWN":"$OLDGRP"
+                    adb shell chown "$OLDOWN":"$OLDGRP" $TARGET
+                    adb shell chmod "$OLDPERM" $TARGET
+                else
+                    echo "$TARGET did not exist previously, you should set file permissions manually"
+                fi
+                adb shell restorecon "$TARGET"
+            ;;
+            /system/priv-app/SystemUI/SystemUI.apk|/system/framework/*)
+                # Only need to stop services once
+                if ! $stop_n_start; then
+                    adb shell stop
+                    stop_n_start=true
+                fi
+                echo "Pushing: $TARGET"
+                adb push $FILE $TARGET
+            ;;
+            *)
+                echo "Pushing: $TARGET"
+                adb push $FILE $TARGET
+            ;;
+        esac
+    done
+    if [ -n "$CHKPERM" ]; then
+        adb shell rm $CHKPERM
+    fi
+    if $stop_n_start; then
+        adb shell start
+    fi
+    rm -f $OUT/.log
+    return 0
+    else
+        echo "The connected device does not appear to be $CM_BUILD, run away!"
+    fi
+}
+
+alias mmp='dopush mm'
+alias mmmp='dopush mmm'
+alias mkap='dopush mka'
+alias cmkap='dopush cmka'
+
+function repopick() {
+    T=$(gettop)
+    $T/build/tools/repopick.py $@
+}
+
+function fixup_common_out_dir() {
+    common_out_dir=$(get_build_var OUT_DIR)/target/common
+    target_device=$(get_build_var TARGET_DEVICE)
+    if [ ! -z $CM_FIXUP_COMMON_OUT ]; then
+        if [ -d ${common_out_dir} ] && [ ! -L ${common_out_dir} ]; then
+            mv ${common_out_dir} ${common_out_dir}-${target_device}
+            ln -s ${common_out_dir}-${target_device} ${common_out_dir}
+        else
+            [ -L ${common_out_dir} ] && rm ${common_out_dir}
+            mkdir -p ${common_out_dir}-${target_device}
+            ln -s ${common_out_dir}-${target_device} ${common_out_dir}
+        fi
+    else
+        [ -L ${common_out_dir} ] && rm ${common_out_dir}
+        mkdir -p ${common_out_dir}
+    fi
+}
+
+# Force JAVA_HOME to point to java 1.7 if it isn't already set.
 #
 # Note that the MacOS path for java 1.7 includes a minor revision number (sigh).
 # For some reason, installing the JDK doesn't make it show up in the
