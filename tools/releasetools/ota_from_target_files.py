@@ -670,7 +670,20 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.SetPermissionsRecursive("/tmp/install", 0, 0, 0o755, 0o644, None, None)
   script.SetPermissionsRecursive("/tmp/install/bin", 0, 0, 0o755, 0o755, None, None)
 
+  script.Print("                                              ")
+  script.Print("**********************************************")
+  script.Print("   __  __                      _   _ ____     ")
+  script.Print("   \ \/ /___ _ __   ___  _ __ | | | |  _ \    ")
+  script.Print("    \  // _ \ '_ \ / _ \| '_ \| |_| | | | |   ")
+  script.Print("    /  \  __/ | | | (_) | | | |  _  | |_| |   ")
+  script.Print("   /_/\_\___|_| |_|\___/|_| |_|_| |_|____/    ")
+  script.Print("                                              ")
+  script.Print("               www.xenonhd.com                ")
+  script.Print("**********************************************")
+  script.Print("                                              ")
+
   if OPTIONS.backuptool:
+    script.Print("Performing Gapps backup. Please wait...")
     script.Mount("/system")
     script.RunBackup("backup")
     script.Unmount("/system")
@@ -760,6 +773,7 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   device_specific.FullOTA_PostValidate()
 
   if OPTIONS.backuptool:
+    script.Print("Restoring Gapps from backup. Please wait...")
     script.ShowProgress(0.02, 10)
     if block_based:
       script.Mount("/system")
