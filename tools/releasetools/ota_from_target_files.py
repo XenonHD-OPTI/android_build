@@ -740,18 +740,14 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
       script.Unmount("/system")
 
   if block_based:
+     script.Print("Flashing Boot Image...")
+     script.WriteRawImage("/boot", "boot.img")
+
+  if block_based:
     script.Print("Flashing SuperSU...")
     common.ZipWriteStr(output_zip, "supersu/supersu.zip",
                    ""+input_zip.read("SYSTEM/addon.d/UPDATE-SuperSU.zip"))
-    script.Mount("/system")
     script.FlashSuperSU()
-
-  if block_based:
-    script.AppendExtra("ifelse(is_mounted(\"/system\"), unmount(\"/system\"));")
-
-  script.ShowProgress(0.05, 5)
-  script.WriteRawImage("/boot", "boot.img")
-
   script.ShowProgress(0.2, 10)
   device_specific.FullOTA_InstallEnd()
 
