@@ -679,6 +679,7 @@ else if get_stage("%(bcb_dev)s") == "3/3" then
   script.Print("   /_/\_\___|_| |_|\___/|_| |_|_| |_|____/    ")
   script.Print("                                              ")
   script.Print("               www.xenonhd.com                ")
+  script.Print("                                              ")
   script.Print("**********************************************")
   script.Print("                                              ")
 
