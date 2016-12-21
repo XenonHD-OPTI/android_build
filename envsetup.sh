@@ -1720,4 +1720,4 @@ check_bash_version && {
 
 export ANDROID_BUILD_TOP=$(gettop)
 
-. vendor/xenonhd/build/envsetup.sh
+. $ANDROID_BUILD_TOP/vendor/xenonhd/build/envsetup.sh
