@@ -90,6 +90,14 @@ CLANG_CONFIG_UNKNOWN_CFLAGS := \
   -Wunused-but-set-parameter \
   -Wunused-but-set-variable \
   -fdiagnostics-color \
+ 	-fgraphite \
+	-fgraphite-identity \
+	-floop-flatten \
+	-floop-parallelize-all \
+	-ftree-loop-linear \
+	-floop-interchange \
+	-floop-strip-mine \
+	-floop-block \
   -fdebug-prefix-map=/proc/self/cwd=
 
 # Clang flags for all host rules
